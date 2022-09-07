@@ -3,6 +3,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import math
 import numpy as np
+import pandas as pd
+import os
 
 # erdos_renyi graph generator
 def _erdos_renyi_graph(n, p):
@@ -32,15 +34,31 @@ def _erdos_renyi_graph(n, p):
     return G,Gcc,aveDegree
 
 def question6_1():
-    # US airport networks (2010)
-    n = 1574 # number of nodes
-    E = 28236 # number of edges
-    p = E/math.comb(n,2) # probability
-    G = nx.gnp_random_graph(n,p, directed=False)
+    # Network scientist coauthorships (2019)
+    #loading the data set
+    #get the current directory
+    directory_path = os.getcwd()
+    print("My current directory is : " + directory_path)
+    filename = directory_path + "\edgelist.xlsx"
+    print("My file name is : " + filename)
+    data = pd.read_excel(filename)
+    df = pd.DataFrame(data)
+
+    print(df.max(numeric_only=True).max())
+    L = list(zip(df["source"], df["target"]))
+    N = (int)(df.max(numeric_only=True).max()+1)  # number of nodes
+    E = len(L) # number of edges
+    p = E/math.comb(N,2) # probability
+    G = nx.Graph()
+    G.add_nodes_from([i for i in range(N)])
+    G.add_edges_from(L)
+    # print(G.degree())
+
+    # G = nx.gnp_random_graph(n,p, directed=False)
     degrees = [G.degree(i) for i in G.nodes()]
-    print(degrees)
-    print(G.nodes())
-    # plot with various axes scales
+    # print(degrees)
+    # print(G.nodes())
+    # # plot with various axes scales
     plt.figure()    
     plt.subplot(221)
     plt.scatter(degrees, G.nodes())
@@ -52,10 +70,11 @@ def question6_1():
     plt.subplot(224)
     plt.scatter(degrees, G.nodes())
     plt.yscale("log")
-    plt.xlabel('Degree')
+    plt.xscale("log")
+    plt.xlabel('Log Degree')
     plt.ylabel('index of nodes')
     plt.title('log')
     #Showing the result for each graph
     plt.show()
 
-    
+question6_1()
