@@ -5,7 +5,6 @@ import math
 import numpy as np
 import pandas as pd
 import os
-from  collections import Counter 
 
 # erdos_renyi graph generator
 def _erdos_renyi_graph(n, p):
@@ -40,7 +39,7 @@ def question6_1():
     #get the current directory
     directory_path = os.getcwd()
     print("My current directory is : " + directory_path)
-    filename = directory_path + "/edgelist.xlsx"
+    filename = directory_path + "\edgelist.xlsx"
     print("My file name is : " + filename)
     data = pd.read_excel(filename)
     df = pd.DataFrame(data)
@@ -54,34 +53,27 @@ def question6_1():
     G.add_nodes_from([i for i in range(N)])
     G.add_edges_from(L)
     # print(G.degree())
-    ex = dict(Counter([G.degree(i) for i in G.nodes()]))
-    # print(ex)
+
     # G = nx.gnp_random_graph(n,p, directed=False)
-    # degrees = [G.degree(i) for i in G.nodes()]
-    degrees = list(ex.keys())
-    node = []
-    for key in degrees:
-        node.append(ex[key]/(int)(df.max(numeric_only=True).max()))
-    print(len(degrees))
-    print(len(node))
+    degrees = [G.degree(i) for i in G.nodes()]
     # print(degrees)
     # print(G.nodes())
     # # plot with various axes scales
     plt.figure()    
     plt.subplot(221)
-    plt.scatter(degrees, node)
+    plt.scatter(degrees, G.nodes())
     plt.yscale("linear")
     plt.xlabel('Degree')
-    plt.ylabel('num nodes')
-    plt.title('Coauthorships Degree Distribution')
+    plt.ylabel('index of nodes')
+    plt.title('linear')
 
     plt.subplot(224)
-    plt.scatter(degrees, node)
+    plt.scatter(degrees, G.nodes())
     plt.yscale("log")
     plt.xscale("log")
     plt.xlabel('Log Degree')
-    plt.ylabel('log num nodes')
-    plt.title('Coauthorships Degree Distribution')
+    plt.ylabel('index of nodes')
+    plt.title('log')
     #Showing the result for each graph
     plt.show()
 
