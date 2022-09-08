@@ -59,7 +59,7 @@ def question6_2():
     
 
     # get all the degrees for each graph
-    ex = dict(Counter([G.degree(j) for j in G.nodes()] for G in Graphs))
+    ex = dict(Counter([G.degree(j) for j in G.nodes() for G in Graphs]))
     degrees = list(ex.keys())
     node = []
     #take the average of each degree in 10 graphs such as (degree[1][0] + degree[2][0]) /2 ...
