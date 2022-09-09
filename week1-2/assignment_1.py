@@ -108,7 +108,7 @@ def question6_1():
     #get the current directory
     directory_path = os.getcwd()
     print("My current directory is : " + directory_path)
-    filename = directory_path + "\edgelist.xlsx"
+    filename = directory_path + "edgelist.xlsx"
     print("My file name is : " + filename)
     data = pd.read_excel(filename)
     df = pd.DataFrame(data)
@@ -150,7 +150,7 @@ def question6_2():
     # US airport networks (2010)
     directory_path = os.getcwd()
     print("My current directory is : " + directory_path)
-    filename = directory_path + "\edgelist.xlsx"
+    filename = directory_path + "/edgelist.xlsx"
     print("My file name is : " + filename)
     data = pd.read_excel(filename)
     df = pd.DataFrame(data)
