@@ -17,7 +17,7 @@ def get_next_nodes(x, y):
 
 
 cols, rows = 23, 13
-TILE = 70
+TILE = 40
 
 pg.init()
 sc = pg.display.set_mode([cols * TILE, rows * TILE])

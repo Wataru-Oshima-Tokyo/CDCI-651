@@ -320,9 +320,11 @@ def quesiton3():
     plt.legend()
     plt.show()
 if __name__ == "__main__":
-    question2_c()
-    quesiton3()    os_name = os.platform.system()
-    print(os_name)
+    question2_a()
+    # question2_c()
+    # quesiton3()    
+    # os_name = os.platform.system()
+    # print(os_name)
 
 
     

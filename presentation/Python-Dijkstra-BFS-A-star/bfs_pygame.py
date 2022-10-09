@@ -13,8 +13,8 @@ def get_next_nodes(x, y):
     return [(x + dx, y + dy) for dx, dy in ways if check_next_node(x + dx, y + dy)]
 
 
-cols, rows = 25, 15
-TILE = 60
+cols, rows = 100, 100
+TILE = 10
 
 pg.init()
 sc = pg.display.set_mode([cols * TILE, rows * TILE])
