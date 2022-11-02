@@ -9,7 +9,7 @@ from  collections import Counter
 import time
 from multiprocessing import Pool
 import platform
-
+import copy
 """
 Q3.
 (25 pts) 
@@ -31,6 +31,27 @@ Note that the format of the network here may be a little difficult to deal with.
 need to write your own parser to use the information in the files to create a graph in NetworkX.
 """
 
+def _erdos_renyi_graph(n, p):
+    # make a graph
+    labels =["1", "2", "3"]
+    prob_list = [1/3,1/3,1/3]
+    G = nx.Graph()
+    # adding nodes according to n
+    nodes =[]
+    for a in range(n):
+        G.add_node(a, label=np.random.choice(labels, p =prob_list))
+    # G.add_nodes_from(nodes)
+    #number of pairs
+    pairs = math.comb(n,2) # n*(n-1)/2
+    print(pairs)
+    # adding edges
+    edges =[]
+    for i in range(n):
+        for j in range(i+1,n): # from the node itself +1 to the last node
+            if np.random.rand() <p: # if the random number is bigger than input p then
+                edges.append((i,j)) # make an edge between them
+    G.add_edges_from(edges)
+    return G
 
 
 def readDiabetesdata(edgeFile, labelFile):
@@ -74,31 +95,35 @@ def readDiabetesLabels(labelFile):
 if __name__ == "__main__":
     edgeFile = "./pubmed-diabetes/data/Pubmed-Diabetes.DIRECTED.cites.tab"
     labelFile = "./pubmed-diabetes/data/Pubmed-Diabetes.NODE.paper.tab"
-    G = readDiabetesdata(edgeFile=edgeFile, labelFile=labelFile)
-
+    # G = readDiabetesdata(edgeFile=edgeFile, labelFile=labelFile)
+    G =_erdos_renyi_graph(100, 1)
+    estimatiion =[]
+    std_error = []
     for p in np.arange(0.1,1.0,0.1):
+        temp_estimate =[]
         for _ in range(10):
+            Gp = copy.deepcopy(G)
             label_nodes = {}
-            nodes = np.random.choice(G.nodes(), size=int(p*len(G)), replace=False)
+            nodes = np.random.choice(Gp.nodes(), size=int(p*len(Gp)), replace=False)
             print(len(nodes))
             #initialize the label of all the nodes except the randomly chosen nodes
-            for v in G.nodes():
+            for v in Gp.nodes():
                 if v in nodes:
                     continue
                 else:
-                    label_nodes[v] =int(G.nodes[v]["label"]) #store the previous label so that we can compare if the predicted label is the same the actual one
-                    G.nodes[v]["label"] = "0"
+                    label_nodes[v] =int(Gp.nodes[v]["label"]) #store the previous label so that we can compare if the predicted label is the same the actual one
+                    Gp.nodes[v]["label"] = "0"
             success_counter=0
             total_counter=0
-            for v in G.nodes():
+            for v in Gp.nodes():
                 if v in nodes: #if the node is in the chosen nodes 
                     continue
                 else:
                     total_counter+=1
                     labels = [0,0,0]
-                    print(v, "neighbors:")
-                    for u in G.neighbors(v): #check all the neighbors of v to use guild by association heuristic
-                        _label = nx.get_node_attributes(G, "label")[u]
+                    # print(v, "neighbors:")
+                    for u in Gp.neighbors(v): #check all the neighbors of v to use guild by association heuristic
+                        _label = nx.get_node_attributes(Gp, "label")[u]
                         if int(_label) == 1:
                             labels[0] +=1
                         elif int(_label) == 2:
@@ -123,6 +148,12 @@ if __name__ == "__main__":
                         # print("different...")
                         pass
             print(p, "prob:", float(success_counter/total_counter))
+            temp_estimate.append(float(success_counter/total_counter))
+        estimatiion.append(np.mean(temp_estimate))
+        std_error.append(np.std(temp_estimate))
+
+
+
 # def _mean_estimate(G):
 #     for p in np.arange(0.1,1.0,0.1):
 #         estimates ={}
