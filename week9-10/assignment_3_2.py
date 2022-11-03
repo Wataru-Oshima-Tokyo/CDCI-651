@@ -34,7 +34,7 @@ need to write your own parser to use the information in the files to create a gr
 def _erdos_renyi_graph(n, p):
     # make a graph
     labels =["1", "2", "3"]
-    prob_list = [1/3,1/3,1/3]
+    prob_list = [7/8,1/16,1/16]
     G = nx.Graph()
     # adding nodes according to n
     nodes =[]
@@ -95,10 +95,15 @@ def readDiabetesLabels(labelFile):
 if __name__ == "__main__":
     edgeFile = "./pubmed-diabetes/data/Pubmed-Diabetes.DIRECTED.cites.tab"
     labelFile = "./pubmed-diabetes/data/Pubmed-Diabetes.NODE.paper.tab"
-    # G = readDiabetesdata(edgeFile=edgeFile, labelFile=labelFile)
-    G =_erdos_renyi_graph(100, 1)
+    G = readDiabetesdata(edgeFile=edgeFile, labelFile=labelFile)
+    # G =_erdos_renyi_graph(1000, 0.001)
+    print(len(G.nodes()))
+    # position1 = nx.circular_layout(G)
+    # nx.draw(G,pos=position1, with_labels = True)
+    # plt.show()
     estimatiion =[]
     std_error = []
+    ps=[]
     for p in np.arange(0.1,1.0,0.1):
         temp_estimate =[]
         for _ in range(10):
@@ -109,9 +114,10 @@ if __name__ == "__main__":
             #initialize the label of all the nodes except the randomly chosen nodes
             for v in Gp.nodes():
                 if v in nodes:
+                    # print("here")
                     continue
                 else:
-                    label_nodes[v] =int(Gp.nodes[v]["label"]) #store the previous label so that we can compare if the predicted label is the same the actual one
+                    label_nodes[v] = int(Gp.nodes[v]["label"]) #store the previous label so that we can compare if the predicted label is the same the actual one
                     Gp.nodes[v]["label"] = "0"
             success_counter=0
             total_counter=0
@@ -141,17 +147,29 @@ if __name__ == "__main__":
                     prob = 1.0/len(_max)
                     prob_list = [prob] * len(_max)
                     node_label = np.random.choice(_max, p =prob_list)
+                    # print(node_label)
                     if node_label == label_nodes[v]:
                         # print("same!")
                         success_counter+=1
                     else:
                         # print("different...")
                         pass
+                    # time.sleep(3)
             print(p, "prob:", float(success_counter/total_counter))
             temp_estimate.append(float(success_counter/total_counter))
         estimatiion.append(np.mean(temp_estimate))
         std_error.append(np.std(temp_estimate))
-
+        ps.append(p)
+    plt.figure()    
+    # plt.subplot(221)
+    plt.scatter(ps, estimatiion, color="red",label='Induced subgraph',alpha=0.3, edgecolors='none')
+    plt.errorbar(ps, estimatiion, yerr=std_error, fmt="o", color="red")
+    # plt.yscale("log")
+    plt.xlabel('probabilities')
+    plt.ylabel('average fraction of correct guesses')
+    plt.title('Guilt by association heuristic')
+    plt.legend()
+    plt.show()
 
 
 # def _mean_estimate(G):
