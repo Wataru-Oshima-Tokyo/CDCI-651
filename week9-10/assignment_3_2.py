@@ -109,54 +109,58 @@ if __name__ == "__main__":
         for _ in range(10):
             Gp = copy.deepcopy(G)
             label_nodes = {}
-            nodes = np.random.choice(Gp.nodes(), size=int(p*len(Gp)), replace=False)
-            print(len(nodes))
+            unobserved_nodes =[]
+            observed_nodes = np.random.choice(Gp.nodes(), size=int(p*len(Gp)), replace=False)
+            
             #initialize the label of all the nodes except the randomly chosen nodes
             for v in Gp.nodes():
-                if v in nodes:
+                if v in observed_nodes:
                     # print("here")
                     continue
                 else:
                     label_nodes[v] = int(Gp.nodes[v]["label"]) #store the previous label so that we can compare if the predicted label is the same the actual one
                     Gp.nodes[v]["label"] = "0"
+                    unobserved_nodes.append(v)
             success_counter=0
             total_counter=0
-            for v in Gp.nodes():
-                if v in nodes: #if the node is in the chosen nodes 
-                    continue
+            print("observed list: ",len(observed_nodes))
+            print("unobserved list: ",len(unobserved_nodes))
+            start = time.time()
+            for v in unobserved_nodes:
+                total_counter+=1
+                labels = [0,0,0]
+                # print(v, "neighbors:")
+                for u in Gp.neighbors(v): #check all the neighbors of v to use guild by association heuristic
+                    _label = nx.get_node_attributes(Gp, "label")[u]
+                    if int(_label) == 1:
+                        labels[0] +=1
+                    elif int(_label) == 2:
+                        labels[1] +=1
+                    elif int(_label) == 3:
+                        labels[2] +=1
+                _max =[]
+                index = labels.index(max(labels))
+                _max.append(index+1)
+                for i in range(len(labels)):
+                    if index == i:
+                        continue
+                    elif labels[i] == labels[index]:
+                        _max.append(i+1)
+                prob = 1.0/len(_max)
+                prob_list = [prob] * len(_max)
+                node_label = np.random.choice(_max, p =prob_list)
+                # print(node_label)
+                if node_label == label_nodes[v]:
+                    # print("same!")
+                    success_counter+=1
                 else:
-                    total_counter+=1
-                    labels = [0,0,0]
-                    # print(v, "neighbors:")
-                    for u in Gp.neighbors(v): #check all the neighbors of v to use guild by association heuristic
-                        _label = nx.get_node_attributes(Gp, "label")[u]
-                        if int(_label) == 1:
-                            labels[0] +=1
-                        elif int(_label) == 2:
-                            labels[1] +=1
-                        elif int(_label) == 3:
-                            labels[2] +=1
-                    _max =[]
-                    index = labels.index(max(labels))
-                    _max.append(index+1)
-                    for i in range(len(labels)):
-                        if index == i:
-                            continue
-                        elif labels[i] == labels[index]:
-                            _max.append(i+1)
-                    prob = 1.0/len(_max)
-                    prob_list = [prob] * len(_max)
-                    node_label = np.random.choice(_max, p =prob_list)
-                    # print(node_label)
-                    if node_label == label_nodes[v]:
-                        # print("same!")
-                        success_counter+=1
-                    else:
-                        # print("different...")
-                        pass
-                    # time.sleep(3)
+                    # print("different...")
+                    pass
+                # time.sleep(3)
             print(p, "prob:", float(success_counter/total_counter))
             temp_estimate.append(float(success_counter/total_counter))
+            end = time.time()
+            print(i, " total time:",(end-start))
         estimatiion.append(np.mean(temp_estimate))
         std_error.append(np.std(temp_estimate))
         ps.append(p)
