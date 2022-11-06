@@ -77,39 +77,7 @@ if __name__ == "__main__":
         print("Node: %d (%s) has %lf degree centrality, %lf harmonic centrality, %lf eigenvector centrality, %lf betweenness_centrality" %(int(i), labels[int(i)], degree_centrality[i], harmonic_centrality[i],eigenvector_centrality[i], betweenness_centrality[i]))
     #For each measure, make a table with the families ranked by importance. Show these tables side by side
     real_harmonic_centrality = get_dict_inOrder(harmonic_centrality)
-    """
-    a.
-    1. How can I defince the importance?
-    2. what does the table look like?
-    """
-    """
-    b.How important was the Medici family with respect to this network? What family was the second most important?
-    Node: 8 (Medici) has 0.400000 degree centrality, 9.500000 harmonic centrality, 0.430315 eigenvector centrality, 0.452381 betweenness_centrality
 
-    Answer. Sicne Medici famili has the higest degree centrality, it can be thought the family has the largest number of edges connected to other families and the second most important family is Guadagni family since it has 
-    the second higest number for degree centrality 
-    """
-
-    """
-    c.Are our measurements for harmonic centrality unusual given the degree distribution of this network? 
-    Using the degree sequence of this network, generate 10,000 random networks using the configuration model. 
-    Make a figure with families on the x-axis and harmonic centrality minus mean harmonic centrality on the y-axis. 
-
-     h- h_bar
-        |
-        |
-        |
-        |
-        |
-        |
-        - - -- -- - - -- -- - - -- -- -  
-                familyt name
-
-    Include error bars representing one standard deviation for each point. Discuss what you find.
-
-    Answer. What I found is that the acutal data and data from the same degree sequence are similar but not actually the same and also the 
-    harmonic centrality for each node is slightly above the value from degree sequence one.
-    """
     #get the degree seaquence
     _degreeSeq ={}
     for i in G.nodes():

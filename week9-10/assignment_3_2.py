@@ -123,8 +123,8 @@ if __name__ == "__main__":
                     unobserved_nodes.append(v)
             success_counter=0
             total_counter=0
-            print("observed list: ",len(observed_nodes))
-            print("unobserved list: ",len(unobserved_nodes))
+            print("observed list: ", len(observed_nodes))
+            print("unobserved list: ", len(unobserved_nodes))
             start = time.time()
             for v in unobserved_nodes:
                 total_counter+=1
@@ -169,8 +169,8 @@ if __name__ == "__main__":
     plt.scatter(ps, estimatiion, color="red",label='Induced subgraph',alpha=0.3, edgecolors='none')
     plt.errorbar(ps, estimatiion, yerr=std_error, fmt="o", color="red")
     # plt.yscale("log")
-    plt.xlabel('probabilities')
-    plt.ylabel('average fraction of correct guesses')
+    plt.xlabel('Probabilities')
+    plt.ylabel('Average fraction of correct guesses')
     plt.title('Guilt by association heuristic')
     plt.legend()
     plt.show()
