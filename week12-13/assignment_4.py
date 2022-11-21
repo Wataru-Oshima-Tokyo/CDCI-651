@@ -49,18 +49,28 @@ def _greedyModularity(G):
     weight =None
     resolution = 1
     # Count edges (or the sum of edge-weights for weighted graphs)
-    m = G.size(weight)
+    # m = G.size(weight)
+    m = G.edges()
     q0 = 1 / m
 
     # Calculate degrees (notation from the papers)
     # a : the fraction of (weighted) out-degree for each node
     # b : the fraction of (weighted) in-degree for each node
-    a = b = {node: deg * q0 * 0.5 for node, deg in G.degree(weight=weight)}
+    # a = b = {node: deg * q0 * 0.5 for node, deg in G.degree(weight=weight)}
+    # {a: b+c for ... } means its making a dictionary
+    a = b = {node: degree * q0 * 0.5 for node, degree in G.degree()}
 
+    
     # this preliminary step collects the edge weights for each node pair
     # It handles multigraph and digraph and works fine for graph.
+    # the reason why I used default dict is to avoid getting keyerror when the dictionary does not have a key
     dq_dict = defaultdict(lambda: defaultdict(float))
-    for u, v, wt in G.edges(data=weight, default=1):
+    # for u, v, wt in G.edges(data=weight, default=1):
+    #     if u == v:
+    #         continue
+    #     dq_dict[u][v] += wt
+    #     dq_dict[v][u] += wt
+    for u, v, wt in G.edges():
         if u == v:
             continue
         dq_dict[u][v] += wt
@@ -111,7 +121,8 @@ def _greedyModularity(G):
             dq_heap[v].remove((v, u))
 
         # Perform merge
-        communities[v] = frozenset(communities[u] | communities[v])
+        # communities[v] = frozenset(communities[u] | communities[v])
+        communities[v] = set(communities[u] | communities[v])
         del communities[u]
 
         # Get neighbor communities connected to the merged communities
