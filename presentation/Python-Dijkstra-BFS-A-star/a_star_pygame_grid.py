@@ -6,7 +6,8 @@ from collections import deque
 import time
 import sys
 import math
-
+import numpy as np
+from memory_profiler import profile
 
 def get_circle(x, y):
     return (x * TILE + TILE // 2, y * TILE + TILE // 2), TILE // 4
@@ -37,6 +38,7 @@ def dynamic_heuristic(a,b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def make_grid(random_,t,dstar):
+    dstar = False
     global grid
     grid = [[]]
     if random_:
@@ -50,45 +52,33 @@ def make_grid(random_,t,dstar):
     else:
         for row in range(rows):
             grid.append([])
-            if dstar:
-                for col in range(cols):
-                    # print(rows, ":", row-t)
-                    #first rectangle
-                    if ((abs(row-t) >= rows//3  or abs(row-t) >= rows//3) and (abs(row-t) <=rows//2 or abs(row-t) <=rows//2)) and (col >= cols//3 or col >= cols//3)  and (col <=cols//2 or col <=cols//2):                   
-                            grid[row].append(100)
-                    elif (row >= rows//2 and row <=rows-rows//10) and (abs(col-t) >= cols//2 and abs(col-t) <=cols-cols//10):
-                            grid[row].append(100)
-                    # #third triangle
-                    elif math.sqrt(pow((row -t),2)+ pow((col-t),2))<8:
+            for col in range(cols):
+                #first rectangle
+                if (abs(row-t) >= rows//3 and abs(row-t) <=rows//2) and (col >= cols//3 and col <=cols//2):
+                    grid[row].append(100)
+                #second rectangle
+                elif (row >= rows//2 and row <=rows-rows//10) and (abs(col-t) >= cols//2 and abs(col-t) <=cols-cols//10):
+                    grid[row].append(100)
+                #third triangle
+                elif math.sqrt(pow((row -t),2)+ pow((col-t),2))<8:
+                    grid[row].append(100) 
+                #first circle
+                elif math.sqrt(pow((row*2 -t),2)+ pow((col-t),2))<10:
+                    grid[row].append(100) 
+                #second circle
+                elif math.sqrt(pow((row -t),2)+ pow(((cols-col)-t),2))<10:
                         grid[row].append(100) 
-                    #first circle
-                    elif math.sqrt(pow((row*2 -t),2)+ pow((col-t),2))<10:
-                        grid[row].append(100) 
-                    #second circle
-                    elif math.sqrt(pow((row -t),2)+ pow(((cols-col)-t),2))<10:
-                            grid[row].append(100) 
-                    else:
-                        grid[row].append(0)
-            else:
-                for col in range(cols):
-                    #first rectangle
-                    if (abs(row-t) >= rows//3 and abs(row-t) <=rows//2) and (col >= cols//3 and col <=cols//2):
-                        grid[row].append(100)
-                    #second rectangle
-                    elif (row >= rows//2 and row <=rows-rows//10) and (abs(col-t) >= cols//2 and abs(col-t) <=cols-cols//10):
-                        grid[row].append(100)
-                    #third triangle
-                    elif math.sqrt(pow((row -t),2)+ pow((col-t),2))<8:
-                        grid[row].append(100) 
-                    #first circle
-                    elif math.sqrt(pow((row*2 -t),2)+ pow((col-t),2))<10:
-                        grid[row].append(100) 
-                    #second circle
-                    elif math.sqrt(pow((row -t),2)+ pow(((cols-col)-t),2))<10:
-                            grid[row].append(100) 
-                    else:
-                        grid[row].append(0)
+                else:
+                    grid[row].append(0)
 
+
+def detect_obstacle(v):
+    global grid
+    detected = False
+    if grid[v[1]][v[0]] >= 100:
+        print("object detected")
+        detected = True
+    return  detected
 
 def dijkstra_dstar(start_, goal_, graph):
     global grid,start_time,start
@@ -120,7 +110,7 @@ def dijkstra_dstar(start_, goal_, graph):
 
 
 
-def bfs(start, goal, grpah):
+def bfs(start, goal, graph):
     queue = []
     heappush(queue, (0, start))
     cost_visited = {start: 0} 
@@ -145,7 +135,7 @@ def bfs(start, goal, grpah):
 
 
 def dijkstra_astar(start_, goal_, graph):
-    global grid,start_time,start
+    global grid
     queue = [] #this is the open List
     heappush(queue, (0, start_))  # added the start_ point to the open List
     cost_visited = {start_: 0} #make a closed cost list with the start_ point
@@ -168,20 +158,10 @@ def dijkstra_astar(start_, goal_, graph):
                 cost_visited[neigh_node] = new_cost #update the cost of the node in the closed cost list
                 visited[neigh_node] = cur_node #update the node to visited node in the closed visited list
     return visited
+@profile
+def main(cols, rows, dynamic, astar, dstar, visualize):
+    global average_time
 
-if __name__ =="__main__":
-    
-    if len(sys.argv) == 6:
-        cols, rows, dynamic, astar, dstar = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5])
-    else:
-        cols, rows, dynamic, astar, dstar = 100, 100,0,1,0
-    TILE = 5
-    time_stamp = 3
-    pg.init()
-    sc = pg.display.set_mode([cols * TILE, rows * TILE])
-    clock = pg.time.Clock()
-    grid =[[]]
-    make_grid(random_=False,t=20, dstar=dstar)
 
     # adjacency dict
     graph = {}
@@ -190,6 +170,9 @@ if __name__ =="__main__":
             graph[(x, y)] = graph.get((x, y), []) + get_neighbours(x, y)
 
     start = (0, 7)
+    initial_start = start
+    next_node = None
+    next_next_node = None
     goal = (cols-1, rows-1)
     queue = []
     heappush(queue, (0, start))
@@ -197,42 +180,72 @@ if __name__ =="__main__":
     start_time = time.time()
     total_time = 0.0
     t_=0
-    while True:
+    temp = (0,7)
+    initial_flag = True
+    visited_path =[]
+    path_counter = 0
+    # while True:
+    
+    attempts = 0
+    while(1):
         # fill screen
         if t_>rows*time_stamp:
             t_=1
         else:
             t_+=1
-        if start == (0,7):
+        if start == initial_start and not initial_flag:
             # start = (0, 7)
+            attempts +=1 
             print("The time to reach the goal  is ", total_time)
+            average_time.append(total_time)
             total_time = 0.0
-        sc.fill(pg.Color('black'))
-        #draw the cost cells
-        [[pg.draw.rect(sc, pg.Color('darkorange'), get_rect(x, y), border_radius=TILE // 5)
-        for x, col in enumerate(row) if grid[y][x] >=100] for y, row in enumerate(grid)]
-        [[pg.draw.rect(sc, pg.Color('purple'), get_rect(x, y), border_radius=TILE // 5)
-        for x, col in enumerate(row) if grid[y][x] <100 and grid[y][x] >=50] for y, row in enumerate(grid)]
-        [[pg.draw.rect(sc, pg.Color('green'), get_rect(x, y), border_radius=TILE // 5)
-        for x, col in enumerate(row) if grid[y][x] <50 and grid[y][x] >=30] for y, row in enumerate(grid)]
-        [[pg.draw.rect(sc, pg.Color('white'), get_rect(x, y), border_radius=TILE // 5)
-        for x, col in enumerate(row) if grid[y][x] <30 and grid[y][x] >=10] for y, row in enumerate(grid)]
-        # bfs, get path to mouse click
-        pg.draw.circle(sc, pg.Color('red'), *get_circle(goal[0],goal[1]))
+            initial_flag = True
+            path_counter =0
+            if attempts == 1:
+                break
+            
+
+        if visualize:
+            sc.fill(pg.Color('black'))
+            #draw the cost cells
+            [[pg.draw.rect(sc, pg.Color('darkorange'), get_rect(x, y), border_radius=TILE // 5)
+            for x, col in enumerate(row) if grid[y][x] >=100] for y, row in enumerate(grid)]
+            [[pg.draw.rect(sc, pg.Color('purple'), get_rect(x, y), border_radius=TILE // 5)
+            for x, col in enumerate(row) if grid[y][x] <100 and grid[y][x] >=50] for y, row in enumerate(grid)]
+            [[pg.draw.rect(sc, pg.Color('green'), get_rect(x, y), border_radius=TILE // 5)
+            for x, col in enumerate(row) if grid[y][x] <50 and grid[y][x] >=30] for y, row in enumerate(grid)]
+            [[pg.draw.rect(sc, pg.Color('white'), get_rect(x, y), border_radius=TILE // 5)
+            for x, col in enumerate(row) if grid[y][x] <30 and grid[y][x] >=10] for y, row in enumerate(grid)]
+            # bfs, get path to mouse click
+            pg.draw.circle(sc, pg.Color('red'), *get_circle(goal[0],goal[1]))
         if dynamic:
-            make_grid(random_=False,t=t_//time_stamp, dstar=dstar)
+            make_grid(random_=False,t=t_//time_stamp, dstar=False)
             # adjacency dict
             graph = {}
             for y, row in enumerate(grid):
                 for x, col in enumerate(row):
                     graph[(x, y)] = graph.get((x, y), []) + get_neighbours(x, y)
-        mouse_pos = get_click_mouse_pos() 
+        mouse_pos = None
+        if visualize:
+            mouse_pos = get_click_mouse_pos() 
         if mouse_pos:
             goal = mouse_pos
         start_time = time.time()
+        detcted = False
         if astar:
-            if dstar:
-                visited = dijkstra_dstar(start, goal, graph)
+            if dstar and not initial_flag:
+                # if detecct_obstacle(goal):
+                detcted = detect_obstacle(start)
+                if detcted:
+                    visited = dijkstra_astar(start, goal, graph)
+                    path_counter =0        
+                else:
+                    try:
+                        start = visited_path[path_counter+3]    
+                        path_counter+=1  
+                    except:
+                        start = initial_start
+                    pass
             else:
                 visited = dijkstra_astar(start, goal, graph)
         else:
@@ -243,35 +256,73 @@ if __name__ =="__main__":
         # print("The time to find a path is ", (end_time-start_time))
         
         # draw path
-        if dstar:
-            path_head, path_segment = start, start
-        else:
-            path_head, path_segment = goal, goal
-        temp = (0,7)
+        path_head, path_segment = goal, goal
+        temp = initial_start
+        
 
+        visited_path =[]
         while path_segment and path_segment in visited:
-            pg.draw.rect(sc, pg.Color('black'), get_rect(path_segment[0], path_segment[1]))
-            pg.draw.circle(sc, pg.Color('blue'), *get_circle(*path_segment))
-            path_segment =visited[path_segment]  
+            if visualize:
+                pg.draw.rect(sc, pg.Color('black'), get_rect(path_segment[0], path_segment[1]))
+                pg.draw.circle(sc, pg.Color('blue'), *get_circle(*path_segment))
+            path_segment = visited[path_segment] 
+            visited_path.append(path_segment)
             if path_segment != None:
-                if dstar:
-                    if (path_segment == goal):
-                            pass
-                    else:    
-                        temp = path_segment
-                else:    
-                    if (path_segment == start):
-                        pass
-                    else:    
-                        temp = path_segment
-        if dstar:
-            goal = temp
+                if path_segment == start:
+                    pass
+                else:   
+                    temp = path_segment
+        
+        visited_path.reverse()
+        if dstar and not initial_flag:
+            if detcted:
+               start = temp 
         else:
             start = temp
-        # print(start)
-        pg.draw.circle(sc, pg.Color('green'), *get_circle(*start))
-        pg.draw.circle(sc, pg.Color('magenta'), *get_circle(*goal))
+        initial_flag = False
+
+        
+        print("current node: ",start)
+        # next_node = visited[start]
+        # print("next node: ",visited_path[2])
+        # print(visited)
+        if visualize:
+            pg.draw.circle(sc, pg.Color('green'), *get_circle(*start))
+            pg.draw.circle(sc, pg.Color('magenta'), *get_circle(*goal))
         # pygame necessary lines
-        [exit() for event in pg.event.get() if event.type == pg.QUIT]
-        pg.display.flip()
+            [exit() for event in pg.event.get() if event.type == pg.QUIT]
+            pg.display.flip()
         clock.tick(60)
+
+if __name__ == "__main__":
+    if len(sys.argv) == 7:
+        cols, rows, dynamic, astar, dstar, visualize = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]),int(sys.argv[6])
+    else:
+        cols, rows, dynamic, astar, dstar,visualize = 100, 100,1,1,1,0
+    average_time = []
+    TILE = 5
+    time_stamp = 3
+    if visualize:
+        pg.init()
+        sc = pg.display.set_mode([cols * TILE, rows * TILE])
+    clock = pg.time.Clock()
+    grid =[[]]
+    make_grid(random_=False,t=20, dstar=dstar)
+    main(cols, rows, dynamic, astar, dstar, visualize)
+    
+
+
+    map_type =""
+    algorithm =""
+    if dynamic:
+        map_type = "dynamic"
+    else:
+        map_type = "static"
+
+    if dstar:
+        algorithm = "D star algorithm"
+    elif astar:
+        algorithm = "A star algorithm"
+    else:
+        algorithm = "BFS algorithm"
+    print("The average Time to reach the goal in %s %d x %d map by %s is %lf" %(map_type, cols, rows, algorithm, np.mean(average_time)))
