@@ -8,6 +8,7 @@ import sys
 import math
 import numpy as np
 from memory_profiler import profile
+import matplotlib.pyplot as plt
 
 def get_circle(x, y):
     return (x * TILE + TILE // 2, y * TILE + TILE // 2), TILE // 4
@@ -158,7 +159,7 @@ def dijkstra_astar(start_, goal_, graph):
                 cost_visited[neigh_node] = new_cost #update the cost of the node in the closed cost list
                 visited[neigh_node] = cur_node #update the node to visited node in the closed visited list
     return visited
-@profile
+# @profile
 def main(cols, rows, dynamic, astar, dstar, visualize):
     global average_time
 
@@ -201,7 +202,7 @@ def main(cols, rows, dynamic, astar, dstar, visualize):
             total_time = 0.0
             initial_flag = True
             path_counter =0
-            if attempts == 1:
+            if attempts == 20:
                 break
             
 
@@ -295,34 +296,96 @@ def main(cols, rows, dynamic, astar, dstar, visualize):
         clock.tick(60)
 
 if __name__ == "__main__":
-    if len(sys.argv) == 7:
-        cols, rows, dynamic, astar, dstar, visualize = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]),int(sys.argv[6])
+    if len(sys.argv) == 8:
+        cols, rows, dynamic, astar, dstar, visualize, debug = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]),int(sys.argv[6]), int(sys.argv[7])
     else:
-        cols, rows, dynamic, astar, dstar,visualize = 100, 100,1,1,1,0
-    average_time = []
+        cols, rows, dynamic, astar, dstar,visualize,debug = 100,100,1,1,1,0,1
+    average_time_total =[]
+    
     TILE = 5
     time_stamp = 3
-    if visualize:
-        pg.init()
-        sc = pg.display.set_mode([cols * TILE, rows * TILE])
-    clock = pg.time.Clock()
-    grid =[[]]
-    make_grid(random_=False,t=20, dstar=dstar)
-    main(cols, rows, dynamic, astar, dstar, visualize)
-    
 
 
-    map_type =""
-    algorithm =""
-    if dynamic:
-        map_type = "dynamic"
+
+
+    #debug:
+
+
+
+    if debug:
+        if visualize:
+            pg.init()
+            sc = pg.display.set_mode([cols * TILE, rows * TILE])
+        clock = pg.time.Clock()
+        grid =[[]]
+        make_grid(random_=False,t=20, dstar=dstar)
+        average_time = []
+        main(cols, rows, dynamic, astar, dstar, visualize)
+        map_type =""
+        algorithm =""
+        if dynamic:
+            map_type = "dynamic"
+        else:
+            map_type = "static"
+
+        if dstar:
+            algorithm = "D star algorithm"
+        elif astar:
+            algorithm = "A star algorithm"
+        else:
+            algorithm = "BFS algorithm"
+        print("The average Time to reach the goal in %s %d x %d map by %s is %lf" %(map_type, cols, rows, algorithm, np.mean(average_time)))
     else:
-        map_type = "static"
+        plot_number = 221
+        plt.figure() 
+        _counter = 0
+        _cols = [20,50,100,150,200]
+        cells = [i*i for i in _cols]
+        colors = ["red", "green", "blue", "orange"]
+        
+        dstar = False
+        dynamic = False
+        for p in range(2):
+            for j in range(2):
+                # plt.subplot(plot_number)
+                for i in range(5):
+                    cols = rows = _cols[i]
+                    if visualize:
+                        pg.init()
+                        sc = pg.display.set_mode([cols * TILE, rows * TILE])
+                    clock = pg.time.Clock()
+                    grid =[[]]
+                    make_grid(random_=False,t=20, dstar=dstar)
+                    average_time = []
+                    main(cols, rows, dynamic, astar, dstar, visualize)
+                    average_time_total.append(np.mean(average_time))
+                map_type =""
+                algorithm =""
+                if dynamic:
+                    map_type = "Dynamic"
+                else:
+                    map_type = "Static"
 
-    if dstar:
-        algorithm = "D star algorithm"
-    elif astar:
-        algorithm = "A star algorithm"
-    else:
-        algorithm = "BFS algorithm"
-    print("The average Time to reach the goal in %s %d x %d map by %s is %lf" %(map_type, cols, rows, algorithm, np.mean(average_time)))
+                if dstar:
+                    algorithm = "D star algorithm"
+                elif astar:
+                    algorithm = "A star algorithm"
+                else:
+                    algorithm = "BFS algorithm"
+                label =  "%s map by %s" %(map_type,algorithm)
+                plt.scatter(cells, average_time_total, color=colors[_counter],label=label,alpha=0.3, edgecolors='none')
+                plot_number+=1
+                dstar = True
+                average_time_total =[]
+                _counter +=1
+            dstar = False
+            dynamic = True   
+        # 
+        # plt.errorbar(ps, harmonic_centrality_total, yerr=std_error, fmt="o", color="red")
+        # plt.yscale("log")
+        plt.xlabel('Number of cells ')
+        plt.ylabel('Time')
+        plt.title('A star vs D star (Time)')
+        plt.legend()
+        plt.show()
+
